@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowRight, Briefcase, Mail, MapPin, Phone, Sparkles, Stars, Instagram, Linkedin, PlayCircle, BadgeCheck } from 'lucide-react';
+import { ArrowRight, Briefcase, Mail, MapPin, Phone, Sparkles, Stars, Instagram, Linkedin, PlayCircle, BadgeCheck, CheckCircle2, TrendingUp } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import SectionTitle from '@/components/SectionTitle';
 import { withBasePath } from '@/lib/site';
@@ -49,9 +49,30 @@ const highlights = [
   { label: 'Focus Areas', value: 'SEO • Social • Brand' }
 ];
 
+const recruiterScan = [
+  'Available for internship & graduate roles',
+  'Portfolio built around campaign and brand outcomes',
+  'Presentation + communication strengths from ambassador experience',
+  'Comfortable with both creative and technical workflows'
+];
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Prajawola Adhikari',
+  jobTitle: 'Aspiring Digital Marketer',
+  email: 'adhikariprajawola@gmail.com',
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Pokhara'
+  },
+  alumniOf: 'Kanya Campus Pokhara'
+};
+
 export default function HomePage() {
   return (
     <main>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <Navbar />
 
       <section id="home" className="relative overflow-hidden pb-20 pt-36 md:pt-40">
@@ -79,12 +100,7 @@ export default function HomePage() {
             </div>
             <div className="mt-6 flex gap-3">
               {[Linkedin, Instagram, Mail].map((Icon, idx) => (
-                <motion.a
-                  key={idx}
-                  whileHover={{ y: -4, scale: 1.08 }}
-                  href="#contact"
-                  className="rounded-full border border-white/70 bg-white/70 p-3 text-plum"
-                >
+                <motion.a key={idx} whileHover={{ y: -4, scale: 1.08 }} href="#contact" className="rounded-full border border-white/70 bg-white/70 p-3 text-plum">
                   <Icon size={18} />
                 </motion.a>
               ))}
@@ -115,7 +131,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      <motion.section id="about" className="section-shell" {...reveal}>
+      <section className="section-shell pt-0">
+        <motion.div {...reveal} className="glass-card grid gap-4 p-6 md:grid-cols-3">
+          {[{ icon: TrendingUp, label: 'Conversion mindset', text: 'Portfolio messaging designed for recruiter decision flow.' }, { icon: Stars, label: 'Brand storytelling', text: 'Content style focused on audience emotion + clarity.' }, { icon: CheckCircle2, label: 'Execution ready', text: 'Prepared to support campaigns from concept to promotion.' }].map((item) => (
+            <div key={item.label} className="rounded-2xl bg-white/70 p-4">
+              <item.icon size={18} className="mb-3" />
+              <p className="text-sm font-semibold">{item.label}</p>
+              <p className="mt-1 text-xs text-plum/75">{item.text}</p>
+            </div>
+          ))}
+        </motion.div>
+      </section>
+
+      <motion.section id="about" className="section-shell pt-0" {...reveal}>
         <SectionTitle
           eyebrow="About Me"
           title="A marketer with both digital creativity and technical understanding"
@@ -192,16 +220,13 @@ export default function HomePage() {
       </section>
 
       <section className="section-shell pt-0">
-        <SectionTitle eyebrow="Why Hire Me" title="A recruiter-ready mix of creativity, communication, and execution" />
-        <div className="grid gap-4 md:grid-cols-2">
-          {[
-            'Strong blend of digital communication and technical understanding',
-            'Hands-on promotional and content creation experience',
-            'Confident presenter with collaborative, people-first communication',
-            'Fast learner ready to contribute in growth-focused marketing teams'
-          ].map((point) => (
-            <div key={point} className="glass-card p-5 text-sm">{point}</div>
-          ))}
+        <SectionTitle eyebrow="Recruiter Quick Scan" title="Why I can add value quickly in marketing teams" />
+        <div className="glass-card p-6">
+          <ul className="grid gap-3 md:grid-cols-2">
+            {recruiterScan.map((item) => (
+              <li key={item} className="flex items-start gap-2 rounded-xl bg-white/70 p-3 text-sm"><CheckCircle2 size={16} className="mt-0.5" />{item}</li>
+            ))}
+          </ul>
         </div>
       </section>
 
@@ -225,6 +250,10 @@ export default function HomePage() {
           </form>
         </div>
       </section>
+
+      <a href="#contact" className="fixed bottom-4 right-4 z-40 rounded-full bg-gradient-to-r from-rose to-lavender px-5 py-3 text-xs font-semibold text-white shadow-glow md:hidden">
+        Hire Me
+      </a>
 
       <footer className="border-t border-white/60 py-10 text-center text-sm text-plum/80">
         <p className="font-medium">Prajawola Adhikari — Digital Marketing Portfolio</p>

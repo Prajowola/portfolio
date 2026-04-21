@@ -58,3 +58,11 @@ If hosted at `https://<user>.github.io/<repo>/`, the build config auto-detects `
 - Why Hire Me
 - Personal brand quote
 - Contact + footer
+
+## 5 highest-impact recruiter upgrades implemented
+
+1. Stronger hero conversion flow with clearer value proposition and CTA hierarchy.
+2. Recruiter quick-scan section to accelerate hiring decisions.
+3. Mobile-optimized nav and sticky "Hire Me" CTA for better conversion on phones.
+4. SEO enhancement with structured data (`Person` JSON-LD).
+5. Improved interaction polish (active nav tracking, richer hover states, visual hierarchy).
