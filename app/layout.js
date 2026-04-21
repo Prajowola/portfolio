@@ -2,15 +2,7 @@ import './globals.css';
 
 export const metadata = {
   title: 'Prajawola Adhikari | Digital Marketing Portfolio',
-  description:
-    'Premium personal brand portfolio for digital marketing, social media, and campaign roles.',
-  metadataBase: new URL('https://example.com'),
-  openGraph: {
-    title: 'Prajawola Adhikari | Digital Marketing Portfolio',
-    description:
-      'Aspiring digital marketer showcasing campaign thinking, content creativity, and brand communication.',
-    type: 'website'
-  }
+  description: 'Premium personal brand portfolio for digital marketing roles.'
 };
 
 export default function RootLayout({ children }) {
