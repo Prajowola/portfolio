@@ -1,55 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Menu, X } from 'lucide-react';
-import { withBasePath } from '@/lib/site';
-
 const links = ['Home', 'About', 'Skills', 'Experience', 'Projects', 'Education', 'Certifications', 'Contact'];
 
 export default function Navbar() {
-  const [active, setActive] = useState('home');
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const targets = links.map((l) => document.getElementById(l.toLowerCase())).filter(Boolean);
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) setActive(entry.target.id);
-      });
-    }, { rootMargin: '-35% 0px -55% 0px' });
-
-    targets.forEach((target) => observer.observe(target));
-    return () => observer.disconnect();
-  }, []);
-
   return (
-    <header className="nav glass">
-      <div className="nav-row">
-        <a className="brand" href="#home">Prajawola.</a>
-
-        <nav className="nav-links">
-          {links.map((link) => {
-            const id = link.toLowerCase();
-            return (
-              <a key={link} href={`#${id}`} className={active === id ? 'active' : ''}>{link}</a>
-            );
-          })}
-        </nav>
-
-        <a className="btn btn-primary" href={withBasePath('/resume.pdf')}>Resume</a>
-
-        <button className="mobile-btn" onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
-          {open ? <X size={18} /> : <Menu size={18} />}
-        </button>
-      </div>
-
-      {open && (
-        <div className="mobile-menu glass">
-          {links.map((link) => (
-            <a key={link} href={`#${link.toLowerCase()}`} onClick={() => setOpen(false)}>{link}</a>
-          ))}
-        </div>
-      )}
+    <header className="fixed inset-x-0 top-4 z-50 mx-auto flex w-[min(1100px,92%)] items-center justify-between rounded-full border border-white/60 bg-white/70 px-5 py-3 shadow-lg backdrop-blur">
+      <a href="#home" className="text-sm font-bold tracking-wide text-plum">Prajawola.</a>
+      <nav className="hidden gap-4 lg:flex">
+        {links.map((link) => (
+          <a key={link} href={`#${link.toLowerCase()}`} className="text-xs font-medium text-plum/80 transition hover:text-plum">
+            {link}
+          </a>
+        ))}
+      </nav>
+      <a href="#contact" className="rounded-full bg-gradient-to-r from-rose to-lavender px-4 py-2 text-xs font-semibold text-white shadow-glow">Let&apos;s Talk</a>
     </header>
   );
 }
