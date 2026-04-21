@@ -10,12 +10,8 @@ body {
   @apply bg-luxury-gradient text-[#3d2d4d] antialiased;
 }
 
-::selection {
-  background: rgba(231, 139, 183, 0.35);
-}
-
 .section-shell {
-  @apply mx-auto w-full max-w-6xl px-6 py-20 md:px-10 md:py-24;
+  @apply mx-auto w-full max-w-6xl px-6 py-20 md:px-10;
 }
 
 .glass-card {
