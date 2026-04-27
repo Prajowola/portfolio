@@ -69,7 +69,7 @@ export default function HomePage() {
           <div className="relative space-y-5">
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-plum/70">Profile</p>
             <img
-                src="/profile.jpeg"
+                src="/profile.jpg"
                 alt="Prajawola Adhikari"
                 className="mx-auto h-80 w-full max-w-xs rounded-3xl object-cover shadow-glow"
              />
