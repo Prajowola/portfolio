@@ -22,7 +22,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-white/60 py-6">
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-plum/80 md:flex-row md:px-10">
-        <p>© {new Date().getFullYear()} Prajawola Adhikari. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Prajawola Adhikari</p>
 
         <div className="flex items-center gap-3">
           {socialLinks.map(({ label, href, icon: Icon }) => (
