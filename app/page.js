@@ -68,9 +68,11 @@ export default function HomePage() {
           <div className="absolute -bottom-8 -left-6 h-32 w-32 rounded-full bg-rose/30 blur-2xl" />
           <div className="relative space-y-5">
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-plum/70">Profile</p>
-            <div className="mx-auto flex h-64 w-full max-w-xs items-center justify-center rounded-3xl border border-dashed border-plum/25 bg-white/60 text-sm font-medium text-plum/70">
-              Profile Photo Placeholder
-            </div>
+            <img
+                src="/profile.jpeg"
+                alt="Prajawola Adhikari"
+                className="mx-auto h-80 w-full max-w-xs rounded-3xl object-cover shadow-glow"
+             />
           </div>
         </div>
       </div>
