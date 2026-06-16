@@ -7,7 +7,6 @@ import GameShell from '@/components/GameShell';
 const N = 15;
 const CELL = 24;
 const SIZE = N * CELL;
-const TICK = 170;
 
 const DIRS = {
   up: { dr: -1, dc: 0 },
@@ -17,12 +16,22 @@ const DIRS = {
 };
 
 const PAC_START = { r: 13, c: 7 };
-const GHOST_STARTS = [
-  { r: 7, c: 5, color: '#e78bb7', smart: true },
-  { r: 7, c: 9, color: '#8b6fb0', smart: false }
+const GHOST_DEFS = [
+  { r: 7, c: 5, color: '#e78bb7' },
+  { r: 7, c: 9, color: '#8b6fb0' },
+  { r: 1, c: 7, color: '#f0a868' }
 ];
+const POWER_CELLS = ['1,1', '1,13', '13,1', '13,13'];
 
-// Lattice maze: solid border + posts at every even/even interior cell.
+// difficulty -> ghost count, how often ghosts step (1 = every tick), chase smartness,
+// frightened duration (ticks), and loop speed.
+const DIFFICULTY = {
+  easy: { label: 'Easy', ghosts: 2, ghostStep: 2, smart: 0.2, fright: 45, tick: 190 },
+  medium: { label: 'Medium', ghosts: 2, ghostStep: 1, smart: 0.6, fright: 35, tick: 168 },
+  hard: { label: 'Hard', ghosts: 3, ghostStep: 1, smart: 0.9, fright: 26, tick: 150 }
+};
+const LEVELS = ['easy', 'medium', 'hard'];
+
 function buildMaze() {
   const m = [];
   for (let r = 0; r < N; r += 1) {
@@ -40,29 +49,33 @@ function buildMaze() {
 const MAZE = buildMaze();
 const isWall = (r, c) => r < 0 || c < 0 || r >= N || c >= N || MAZE[r][c] === 1;
 
-function freshState() {
+function freshState(level) {
+  const cfg = DIFFICULTY[level];
   const pellets = new Set();
   for (let r = 0; r < N; r += 1) {
     for (let c = 0; c < N; c += 1) {
       if (!isWall(r, c)) pellets.add(`${r},${c}`);
     }
   }
+  const power = new Set(POWER_CELLS);
+  power.forEach((k) => pellets.delete(k));
   pellets.delete(`${PAC_START.r},${PAC_START.c}`);
-  GHOST_STARTS.forEach((g) => pellets.delete(`${g.r},${g.c}`));
-  return {
-    pac: { ...PAC_START },
-    dir: DIRS.left,
-    next: DIRS.left,
-    ghosts: GHOST_STARTS.map((g) => ({ r: g.r, c: g.c, color: g.color, smart: g.smart, dir: DIRS.up })),
-    pellets,
-    frame: 0
-  };
+
+  const ghosts = GHOST_DEFS.slice(0, cfg.ghosts).map((g) => {
+    pellets.delete(`${g.r},${g.c}`);
+    power.delete(`${g.r},${g.c}`);
+    return { r: g.r, c: g.c, sr: g.r, sc: g.c, color: g.color, dir: DIRS.up };
+  });
+
+  return { cfg, pac: { ...PAC_START }, dir: DIRS.left, next: DIRS.left, ghosts, pellets, power, fright: 0, frame: 0 };
 }
 
 export default function PacManPage() {
   const canvasRef = useRef(null);
   const game = useRef(null);
+  const [level, setLevel] = useState('medium');
   const [score, setScore] = useState(0);
+  const [fright, setFright] = useState(0);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState(null); // 'win' | 'lose' | null
 
@@ -78,12 +91,18 @@ export default function PacManPage() {
       for (let c = 0; c < N; c += 1) {
         const x = c * CELL;
         const y = r * CELL;
+        const key = `${r},${c}`;
         if (isWall(r, c)) {
           ctx.fillStyle = '#3b2a6e';
           ctx.beginPath();
           ctx.roundRect(x + 2, y + 2, CELL - 4, CELL - 4, 5);
           ctx.fill();
-        } else if (g.pellets.has(`${r},${c}`)) {
+        } else if (g.power.has(key)) {
+          ctx.fillStyle = '#ffd27f';
+          ctx.beginPath();
+          ctx.arc(x + CELL / 2, y + CELL / 2, g.frame % 2 === 0 ? 6 : 5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (g.pellets.has(key)) {
           ctx.fillStyle = '#f3d9e8';
           ctx.beginPath();
           ctx.arc(x + CELL / 2, y + CELL / 2, 2.5, 0, Math.PI * 2);
@@ -112,7 +131,8 @@ export default function PacManPage() {
       const cx = gh.c * CELL + CELL / 2;
       const cy = gh.r * CELL + CELL / 2;
       const R = CELL / 2 - 2;
-      ctx.fillStyle = gh.color;
+      const scared = g.fright > 0;
+      ctx.fillStyle = scared ? (g.fright < 8 && g.frame % 2 === 0 ? '#ffffff' : '#3b5bdb') : gh.color;
       ctx.beginPath();
       ctx.arc(cx, cy - 1, R, Math.PI, 0);
       ctx.lineTo(cx + R, cy + R);
@@ -127,37 +147,39 @@ export default function PacManPage() {
     });
   }, []);
 
-  const start = useCallback(() => {
-    game.current = freshState();
+  const start = useCallback((lvl) => {
+    game.current = freshState(lvl ?? level);
     setScore(0);
+    setFright(0);
     setResult(null);
     setRunning(true);
     draw();
-  }, [draw]);
+  }, [level, draw]);
 
   const setDir = useCallback((name) => {
     const g = game.current;
     if (g) g.next = DIRS[name];
   }, []);
 
-  const moveGhost = useCallback((gh, pac) => {
+  const moveGhost = useCallback((gh, g) => {
     const options = Object.values(DIRS).filter((d) => {
       if (isWall(gh.r + d.dr, gh.c + d.dc)) return false;
-      return !(d.dr === -gh.dir.dr && d.dc === -gh.dir.dc); // no reversing
+      return !(d.dr === -gh.dir.dr && d.dc === -gh.dir.dc);
     });
     const choices = options.length
       ? options
       : Object.values(DIRS).filter((d) => !isWall(gh.r + d.dr, gh.c + d.dc));
     if (!choices.length) return;
 
+    const chase = g.fright === 0 && Math.random() < g.cfg.smart;
     let pick;
-    if (!gh.smart && Math.random() < 0.55) {
-      pick = choices[Math.floor(Math.random() * choices.length)];
-    } else {
+    if (chase) {
       pick = choices.reduce((best, d) => {
-        const dist = Math.abs(gh.r + d.dr - pac.r) + Math.abs(gh.c + d.dc - pac.c);
+        const dist = Math.abs(gh.r + d.dr - g.pac.r) + Math.abs(gh.c + d.dc - g.pac.c);
         return dist < best.dist ? { d, dist } : best;
       }, { d: choices[0], dist: Infinity }).d;
+    } else {
+      pick = choices[Math.floor(Math.random() * choices.length)];
     }
     gh.dir = pick;
     gh.r += pick.dr;
@@ -166,10 +188,15 @@ export default function PacManPage() {
 
   useEffect(() => {
     if (!running) return undefined;
+    const cfg = game.current?.cfg ?? DIFFICULTY[level];
     const id = setInterval(() => {
       const g = game.current;
       if (!g) return;
       g.frame += 1;
+      if (g.fright > 0) {
+        g.fright -= 1;
+        setFright(g.fright);
+      }
 
       if (!isWall(g.pac.r + g.next.dr, g.pac.c + g.next.dc)) g.dir = g.next;
       if (!isWall(g.pac.r + g.dir.dr, g.pac.c + g.dir.dc)) {
@@ -181,20 +208,43 @@ export default function PacManPage() {
       if (g.pellets.has(key)) {
         g.pellets.delete(key);
         setScore((s) => s + 1);
+      } else if (g.power.has(key)) {
+        g.power.delete(key);
+        g.fright = cfg.fright;
+        setFright(cfg.fright);
+        setScore((s) => s + 5);
       }
 
-      const caught = () => g.ghosts.some((gh) => gh.r === g.pac.r && gh.c === g.pac.c);
-      if (caught()) { setRunning(false); setResult('lose'); return; }
+      // collision check helper: returns 'lose' or null, eats frightened ghosts
+      const collide = () => {
+        for (const gh of g.ghosts) {
+          if (gh.r === g.pac.r && gh.c === g.pac.c) {
+            if (g.fright > 0) {
+              gh.r = gh.sr;
+              gh.c = gh.sc;
+              gh.dir = DIRS.up;
+              setScore((s) => s + 10);
+            } else {
+              return 'lose';
+            }
+          }
+        }
+        return null;
+      };
 
-      g.ghosts.forEach((gh) => moveGhost(gh, g.pac));
+      if (collide() === 'lose') { setRunning(false); setResult('lose'); return; }
 
-      if (caught()) { setRunning(false); setResult('lose'); return; }
-      if (g.pellets.size === 0) { setRunning(false); setResult('win'); return; }
+      if (g.frame % cfg.ghostStep === 0) {
+        g.ghosts.forEach((gh) => moveGhost(gh, g));
+      }
+
+      if (collide() === 'lose') { setRunning(false); setResult('lose'); return; }
+      if (g.pellets.size === 0 && g.power.size === 0) { setRunning(false); setResult('win'); return; }
 
       draw();
-    }, TICK);
+    }, cfg.tick);
     return () => clearInterval(id);
-  }, [running, draw, moveGhost]);
+  }, [running, level, draw, moveGhost]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -214,10 +264,31 @@ export default function PacManPage() {
   return (
     <GameShell
       title="Pac-Man"
-      tagline="Eat every pellet in the maze while the ghosts hunt you down."
-      instructions="Arrow keys (or WASD) to move; on mobile use the on-screen pad. Clear all pellets to win — one touch from a ghost ends the run."
+      tagline="Eat every pellet to clear the maze. Grab a big power pellet to turn the ghosts blue and edible for a few seconds."
+      instructions="Arrow keys (or WASD) to move; on mobile use the on-screen pad. One touch from a normal ghost ends the run."
+      sourceSlug="pac-man"
     >
-      <p className="mb-4 text-lg font-semibold text-plum dark:text-lavender">Pellets eaten: {score}</p>
+      <div className="mb-5 inline-flex rounded-full bg-white/70 p-1 dark:bg-white/5">
+        {LEVELS.map((lvl) => (
+          <button
+            key={lvl}
+            type="button"
+            onClick={() => { setLevel(lvl); start(lvl); }}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold capitalize transition ${
+              level === lvl
+                ? 'bg-gradient-to-r from-rose to-lavender text-white'
+                : 'text-plum/70 hover:text-plum dark:text-white/60 dark:hover:text-white'
+            }`}
+          >
+            {DIFFICULTY[lvl].label}
+          </button>
+        ))}
+      </div>
+
+      <p className="mb-4 flex items-center gap-4 text-lg font-semibold text-plum dark:text-lavender">
+        <span>Score: {score}</span>
+        {fright > 0 && <span className="text-sm font-medium text-blue-600 dark:text-blue-300">Ghosts edible! 👻</span>}
+      </p>
 
       <div className="relative">
         <canvas
@@ -229,13 +300,13 @@ export default function PacManPage() {
         {!running && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl bg-white/70 backdrop-blur-sm dark:bg-midnight/70">
             {result === 'win' && <p className="text-xl font-semibold text-plum dark:text-white">You cleared the maze! 🎉</p>}
-            {result === 'lose' && <p className="text-xl font-semibold text-plum dark:text-white">Caught! Pellets eaten: {score}</p>}
+            {result === 'lose' && <p className="text-xl font-semibold text-plum dark:text-white">Caught! Score: {score}</p>}
             <button
               type="button"
-              onClick={start}
+              onClick={() => start()}
               className="rounded-full bg-gradient-to-r from-rose to-lavender px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-105"
             >
-              {result ? 'Play again' : 'Start game'}
+              {result ? 'Play again' : `Start (${DIFFICULTY[level].label})`}
             </button>
           </div>
         )}

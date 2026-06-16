@@ -9,6 +9,12 @@ const LINES = [
   [0, 4, 8], [2, 4, 6]
 ];
 
+const DIFFICULTIES = [
+  { id: 'easy', label: 'Easy' },
+  { id: 'medium', label: 'Medium' },
+  { id: 'hard', label: 'Hard' }
+];
+
 function getWinner(board) {
   for (const [a, b, c] of LINES) {
     if (board[a] && board[a] === board[b] && board[a] === board[c]) {
@@ -19,8 +25,21 @@ function getWinner(board) {
 }
 
 const isFull = (board) => board.every(Boolean);
+const empties = (board) => board.map((v, i) => (v ? null : i)).filter((i) => i !== null);
 
-// Computer is 'O', human is 'X'. Returns { score, move }.
+// Returns the index that completes a line for `player`, if any.
+function findLine(board, player) {
+  for (const [a, b, c] of LINES) {
+    const line = [a, b, c];
+    const marks = line.map((i) => board[i]);
+    if (marks.filter((m) => m === player).length === 2 && marks.includes(null)) {
+      return line[marks.indexOf(null)];
+    }
+  }
+  return null;
+}
+
+// Computer is 'O', human is 'X'.
 function minimax(board, isMax) {
   const win = getWinner(board);
   if (win) return { score: win.player === 'O' ? 1 : -1 };
@@ -37,9 +56,23 @@ function minimax(board, isMax) {
   return best;
 }
 
+function chooseMove(board, difficulty) {
+  const open = empties(board);
+  const random = () => open[Math.floor(Math.random() * open.length)];
+
+  if (difficulty === 'easy') return random();
+
+  if (difficulty === 'medium') {
+    return findLine(board, 'O') ?? findLine(board, 'X') ?? (board[4] === null ? 4 : random());
+  }
+
+  return minimax(board.slice(), true).move ?? random();
+}
+
 export default function TicTacToePage() {
   const [board, setBoard] = useState(Array(9).fill(null));
   const [locked, setLocked] = useState(false);
+  const [difficulty, setDifficulty] = useState('hard');
 
   const win = getWinner(board);
   const done = win || isFull(board);
@@ -57,12 +90,12 @@ export default function TicTacToePage() {
 
     setLocked(true);
     setTimeout(() => {
-      const { move } = minimax(afterPlayer.slice(), true);
+      const move = chooseMove(afterPlayer, difficulty);
       const afterCpu = afterPlayer.slice();
-      if (move !== undefined) afterCpu[move] = 'O';
+      if (move !== undefined && move !== null) afterCpu[move] = 'O';
       setBoard(afterCpu);
       setLocked(false);
-    }, 350);
+    }, 320);
   }
 
   function reset() {
@@ -70,12 +103,35 @@ export default function TicTacToePage() {
     setLocked(false);
   }
 
+  function changeDifficulty(id) {
+    setDifficulty(id);
+    reset();
+  }
+
   return (
     <GameShell
       title="Tic-Tac-Toe"
-      tagline="You are X. The computer plays a perfect game — the best you can do is a draw."
+      tagline="You are X. Pick a difficulty — on Hard the computer plays a perfect game and can't be beaten."
       instructions="Tap a square to place your mark. The computer responds automatically."
+      sourceSlug="tic-tac-toe"
     >
+      <div className="mb-5 inline-flex rounded-full bg-white/70 p-1 dark:bg-white/5">
+        {DIFFICULTIES.map((d) => (
+          <button
+            key={d.id}
+            type="button"
+            onClick={() => changeDifficulty(d.id)}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+              difficulty === d.id
+                ? 'bg-gradient-to-r from-rose to-lavender text-white'
+                : 'text-plum/70 hover:text-plum dark:text-white/60 dark:hover:text-white'
+            }`}
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
+
       <p className="mb-4 text-lg font-semibold text-plum dark:text-lavender">{status}</p>
 
       <div className="grid grid-cols-3 gap-2">
