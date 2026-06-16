@@ -1,4 +1,4 @@
-# Prajawola Adhikari — Digital Marketing Portfolio
+# Prajowola Adhikari — Digital Marketing Portfolio
 
 Premium personal brand portfolio built with **Next.js + React + Tailwind CSS + Framer Motion**.
 
@@ -32,9 +32,8 @@ Formspree form URL (create a free form at formspree.io and copy the endpoint).
 - About
 - Interactive Skills
 - Experience
-- Featured Projects + case study framework
+- Projects — playable browser games built with HTML, CSS, and JavaScript
 - Testimonials
-- Insights (blog) with individual post pages
 - Education
 - Certifications
 - Working Contact form (Formspree)
