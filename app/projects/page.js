@@ -1,4 +1,7 @@
+'use client';
+
 import SectionTitle from '@/components/SectionTitle';
+import FadeIn from '@/components/FadeIn';
 
 const projects = [
   {
@@ -41,25 +44,26 @@ export default function ProjectsPage() {
         />
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {projects.map((project) => (
-            <article key={project.title} className="glass-card p-6">
-              <h3 className="text-xl font-semibold">{project.title}</h3>
-              <ul className="mt-4 space-y-2 text-sm text-plum/85">
-                <li><strong>Objective:</strong> {project.objective}</li>
-                <li><strong>Target Audience:</strong> {project.audience}</li>
-                <li><strong>Strategy:</strong> {project.strategy}</li>
-                <li><strong>Content Approach:</strong> {project.contentApproach}</li>
-                <li><strong>Expected Outcome:</strong> {project.expectedOutcome}</li>
-              </ul>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {project.skillsUsed.map((skill) => (
-                  <span key={skill} className="rounded-full bg-plum/10 px-3 py-1 text-xs font-medium text-plum/85">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-              <p className="mt-3 text-xs text-plum/70"><strong>Skills Used:</strong> {project.skillsUsed.join(' • ')}</p>
-            </article>
+          {projects.map((project, i) => (
+            <FadeIn key={project.title} delay={0.1 * i}>
+              <article className="glass-card h-full p-6 transition hover:-translate-y-1.5">
+                <h3 className="text-xl font-semibold text-plum dark:text-white">{project.title}</h3>
+                <ul className="mt-4 space-y-2 text-sm text-plum/85 dark:text-white/80">
+                  <li><strong className="text-plum dark:text-white">Objective:</strong> {project.objective}</li>
+                  <li><strong className="text-plum dark:text-white">Target Audience:</strong> {project.audience}</li>
+                  <li><strong className="text-plum dark:text-white">Strategy:</strong> {project.strategy}</li>
+                  <li><strong className="text-plum dark:text-white">Content Approach:</strong> {project.contentApproach}</li>
+                  <li><strong className="text-plum dark:text-white">Expected Outcome:</strong> {project.expectedOutcome}</li>
+                </ul>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {project.skillsUsed.map((skill) => (
+                    <span key={skill} className="rounded-full bg-plum/10 px-3 py-1 text-xs font-medium text-plum/85 dark:bg-white/10 dark:text-white/80">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </FadeIn>
           ))}
         </div>
       </div>

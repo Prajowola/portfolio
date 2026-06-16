@@ -7,7 +7,11 @@ html {
 }
 
 body {
-  @apply bg-luxury-gradient text-[#3d2d4d] antialiased;
+  @apply bg-luxury-gradient text-[#3d2d4d] antialiased transition-colors duration-300;
+}
+
+html.dark body {
+  @apply bg-luxury-gradient-dark text-[#f1e9f7];
 }
 
 .section-shell {
@@ -15,9 +19,25 @@ body {
 }
 
 .glass-card {
-  @apply rounded-3xl border border-white/50 bg-white/60 shadow-xl backdrop-blur-xl;
+  @apply rounded-3xl border border-white/50 bg-white/60 shadow-xl backdrop-blur-xl transition-colors duration-300;
+}
+
+html.dark .glass-card {
+  @apply border-white/10 bg-midnightCard/60 shadow-glowDark;
 }
 
 .gradient-text {
   @apply bg-gradient-to-r from-rose via-plum to-lavender bg-clip-text text-transparent;
+}
+
+html.dark .gradient-text {
+  @apply bg-gradient-to-r from-rose via-lavender to-blush bg-clip-text text-transparent;
+}
+
+.tag-pill {
+  @apply rounded-full border border-plum/20 bg-white/75 px-3 py-1.5 text-sm transition-colors;
+}
+
+html.dark .tag-pill {
+  @apply border-lavender/20 bg-white/5;
 }

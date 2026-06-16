@@ -21,15 +21,24 @@ npm run build
 
 Then deploy the generated `out/` directory to GitHub Pages.
 
+## Contact form setup
+
+The contact form posts to Formspree. Replace `FORM_ENDPOINT` in `app/contact/page.js` with your own
+Formspree form URL (create a free form at formspree.io and copy the endpoint).
+
 ## Included sections
 
-- Hero + recruiter-focused value proposition
+- Hero with animated stats and ambient motion
 - About
 - Interactive Skills
 - Experience
 - Featured Projects + case study framework
+- Testimonials
+- Insights (blog) with individual post pages
 - Education
 - Certifications
-- Why Hire Me
+- Working Contact form (Formspree)
+- Dark / light mode toggle
+- Scroll progress indicator
 - Personal Brand quote
-- Contact + footer
+- Footer
