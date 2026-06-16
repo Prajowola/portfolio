@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pac-Man — by Prajowola Adhikari</title>
+<style>
+  :root { --plum:#5d3b6e; --rose:#e78bb7; --lav:#b9a7e6; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: linear-gradient(135deg, #fff8f4 0%, #ffeef8 45%, #f0e9ff 100%);
+    color: var(--plum); padding: 24px;
+  }
+  h1 { margin: 0; font-size: 1.8rem; }
+  .controls { display: inline-flex; background: rgba(255,255,255,.7); border-radius: 999px; padding: 4px; }
+  .controls button { border:0; background:transparent; cursor:pointer; padding:8px 18px; border-radius:999px; font-weight:600; color:rgba(93,59,110,.7); font-size:.9rem; }
+  .controls button.active { background: linear-gradient(90deg, var(--rose), var(--lav)); color:#fff; }
+  #hud { font-weight: 700; font-size: 1.05rem; display:flex; gap:16px; align-items:center; }
+  #fright { color:#3b5bdb; font-size:.85rem; font-weight:600; }
+  .stage { position: relative; }
+  canvas { border-radius: 16px; border: 1px solid rgba(93,59,110,.15); max-width: 100%; }
+  .overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:rgba(255,255,255,.75); border-radius:16px; }
+  .overlay.hidden { display:none; }
+  button.play { border:0; cursor:pointer; padding:10px 24px; border-radius:999px; font-weight:700; color:#fff; background:linear-gradient(90deg,var(--rose),var(--lav)); font-size:.9rem; }
+  .pad { display:grid; grid-template-columns:repeat(3,48px); gap:8px; }
+  .pad button { height:48px; border:0; border-radius:12px; background:rgba(255,255,255,.85); color:var(--plum); font-size:1.2rem; cursor:pointer; }
+  .pad .spacer { visibility:hidden; }
+  footer { font-size:.8rem; color:rgba(93,59,110,.6); text-align:center; max-width:420px; }
+</style>
+</head>
+<body>
+  <h1>Pac-Man</h1>
+  <div class="controls" id="difficulty">
+    <button data-level="easy">Easy</button>
+    <button data-level="medium" class="active">Medium</button>
+    <button data-level="hard">Hard</button>
+  </div>
+  <div id="hud"><span id="score">Score: 0</span><span id="fright"></span></div>
+  <div class="stage">
+    <canvas id="c" width="360" height="360"></canvas>
+    <div class="overlay" id="overlay"><div id="msg"></div><button class="play" id="play">Start game</button></div>
+  </div>
+  <div class="pad">
+    <span class="spacer"></span><button data-dir="up">▲</button><span class="spacer"></span>
+    <button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button>
+  </div>
+  <footer>Eat all pellets to win. Grab a big power pellet to turn the ghosts blue and edible. Arrow keys / WASD / on-screen pad.</footer>
+
+<script>
+  const N = 15, CELL = 24, SIZE = N*CELL;
+  const DIRS = { up:{dr:-1,dc:0}, down:{dr:1,dc:0}, left:{dr:0,dc:-1}, right:{dr:0,dc:1} };
+  const PAC_START = { r:13, c:7 };
+  const GHOST_DEFS = [ {r:7,c:5,color:'#e78bb7'}, {r:7,c:9,color:'#8b6fb0'}, {r:1,c:7,color:'#f0a868'} ];
+  const POWER_CELLS = ['1,1','1,13','13,1','13,13'];
+  const DIFFICULTY = {
+    easy:   { ghosts:2, ghostStep:2, smart:0.2, fright:45, tick:190 },
+    medium: { ghosts:2, ghostStep:1, smart:0.6, fright:35, tick:168 },
+    hard:   { ghosts:3, ghostStep:1, smart:0.9, fright:26, tick:150 }
+  };
+
+  const ctx = document.getElementById('c').getContext('2d');
+  const scoreEl = document.getElementById('score');
+  const frightEl = document.getElementById('fright');
+  const overlay = document.getElementById('overlay');
+  const msg = document.getElementById('msg');
+
+  let level = 'medium', state = null, timer = null, score = 0;
+
+  function buildMaze() {
+    const m = [];
+    for (let r=0;r<N;r++) { const row=[];
+      for (let c=0;c<N;c++) {
+        const border = r===0||c===0||r===N-1||c===N-1;
+        const post = r%2===0 && c%2===0;
+        row.push(border||post ? 1 : 0);
+      } m.push(row);
+    } return m;
+  }
+  const MAZE = buildMaze();
+  const isWall = (r,c) => r<0||c<0||r>=N||c>=N||MAZE[r][c]===1;
+
+  function fresh() {
+    const cfg = DIFFICULTY[level];
+    const pellets = new Set();
+    for (let r=0;r<N;r++) for (let c=0;c<N;c++) if (!isWall(r,c)) pellets.add(r+','+c);
+    const power = new Set(POWER_CELLS);
+    power.forEach(k => pellets.delete(k));
+    pellets.delete(PAC_START.r+','+PAC_START.c);
+    const ghosts = GHOST_DEFS.slice(0, cfg.ghosts).map(g => {
+      pellets.delete(g.r+','+g.c); power.delete(g.r+','+g.c);
+      return { r:g.r, c:g.c, sr:g.r, sc:g.c, color:g.color, dir:DIRS.up };
+    });
+    return { cfg, pac:{...PAC_START}, dir:DIRS.left, next:DIRS.left, ghosts, pellets, power, fright:0, frame:0 };
+  }
+
+  function draw() {
+    const g = state;
+    ctx.fillStyle = '#0f0a18'; ctx.fillRect(0,0,SIZE,SIZE);
+    for (let r=0;r<N;r++) for (let c=0;c<N;c++) {
+      const x=c*CELL, y=r*CELL, key=r+','+c;
+      if (isWall(r,c)) {
+        ctx.fillStyle = '#3b2a6e'; ctx.fillRect(x+2,y+2,CELL-4,CELL-4);
+      } else if (g.power.has(key)) {
+        ctx.fillStyle = '#ffd27f'; ctx.beginPath();
+        ctx.arc(x+CELL/2, y+CELL/2, g.frame%2===0?6:5, 0, Math.PI*2); ctx.fill();
+      } else if (g.pellets.has(key)) {
+        ctx.fillStyle = '#f3d9e8'; ctx.beginPath();
+        ctx.arc(x+CELL/2, y+CELL/2, 2.5, 0, Math.PI*2); ctx.fill();
+      }
+    }
+    // pac-man
+    const pcx = g.pac.c*CELL+CELL/2, pcy = g.pac.r*CELL+CELL/2;
+    const faces = [[DIRS.right,0],[DIRS.down,Math.PI/2],[DIRS.left,Math.PI],[DIRS.up,3*Math.PI/2]];
+    const face = (faces.find(f=>f[0]===g.dir)||[null,0])[1];
+    const open = g.frame%2===0 ? 0.5 : 0.12;
+    ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.moveTo(pcx,pcy);
+    ctx.arc(pcx,pcy,CELL/2-2, face+open, face+2*Math.PI-open); ctx.closePath(); ctx.fill();
+    // ghosts
+    g.ghosts.forEach(gh => {
+      const cx=gh.c*CELL+CELL/2, cy=gh.r*CELL+CELL/2, R=CELL/2-2, scared=g.fright>0;
+      ctx.fillStyle = scared ? ((g.fright<8 && g.frame%2===0) ? '#fff' : '#3b5bdb') : gh.color;
+      ctx.beginPath(); ctx.arc(cx,cy-1,R,Math.PI,0); ctx.lineTo(cx+R,cy+R); ctx.lineTo(cx-R,cy+R); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#fff';
+      ctx.beginPath(); ctx.arc(cx-R/2.5,cy-1,2.6,0,Math.PI*2); ctx.arc(cx+R/2.5,cy-1,2.6,0,Math.PI*2); ctx.fill();
+    });
+  }
+
+  function moveGhost(gh, g) {
+    let options = Object.values(DIRS).filter(d => !isWall(gh.r+d.dr, gh.c+d.dc) && !(d.dr===-gh.dir.dr && d.dc===-gh.dir.dc));
+    if (!options.length) options = Object.values(DIRS).filter(d => !isWall(gh.r+d.dr, gh.c+d.dc));
+    if (!options.length) return;
+    let pick;
+    if (g.fright===0 && Math.random() < g.cfg.smart) {
+      pick = options.reduce((best,d) => {
+        const dist = Math.abs(gh.r+d.dr-g.pac.r) + Math.abs(gh.c+d.dc-g.pac.c);
+        return dist < best.dist ? {d,dist} : best;
+      }, {d:options[0], dist:Infinity}).d;
+    } else {
+      pick = options[Math.floor(Math.random()*options.length)];
+    }
+    gh.dir = pick; gh.r += pick.dr; gh.c += pick.dc;
+  }
+
+  function collide(g) {
+    for (const gh of g.ghosts) {
+      if (gh.r===g.pac.r && gh.c===g.pac.c) {
+        if (g.fright>0) { gh.r=gh.sr; gh.c=gh.sc; gh.dir=DIRS.up; score+=10; }
+        else return true;
+      }
+    }
+    return false;
+  }
+
+  function tick() {
+    const g = state, cfg = g.cfg;
+    g.frame++;
+    if (g.fright>0) g.fright--;
+
+    if (!isWall(g.pac.r+g.next.dr, g.pac.c+g.next.dc)) g.dir = g.next;
+    if (!isWall(g.pac.r+g.dir.dr, g.pac.c+g.dir.dc)) { g.pac.r += g.dir.dr; g.pac.c += g.dir.dc; }
+
+    const key = g.pac.r+','+g.pac.c;
+    if (g.pellets.has(key)) { g.pellets.delete(key); score++; }
+    else if (g.power.has(key)) { g.power.delete(key); g.fright = cfg.fright; score += 5; }
+
+    scoreEl.textContent = 'Score: ' + score;
+    frightEl.textContent = g.fright>0 ? 'Ghosts edible! 👻' : '';
+
+    if (collide(g)) return stop('Caught! Score: ' + score);
+    if (g.frame % cfg.ghostStep === 0) g.ghosts.forEach(gh => moveGhost(gh, g));
+    if (collide(g)) return stop('Caught! Score: ' + score);
+    if (g.pellets.size===0 && g.power.size===0) return stop('You cleared the maze! 🎉');
+    draw();
+  }
+
+  function start() {
+    state = fresh(); score = 0; scoreEl.textContent = 'Score: 0'; frightEl.textContent = '';
+    overlay.classList.add('hidden'); draw();
+    clearInterval(timer); timer = setInterval(tick, state.cfg.tick);
+  }
+  function stop(text) {
+    clearInterval(timer); timer = null;
+    msg.textContent = text; document.getElementById('play').textContent = 'Play again';
+    overlay.classList.remove('hidden');
+  }
+  function setDir(name) { if (state && timer) state.next = DIRS[name]; }
+
+  document.getElementById('difficulty').addEventListener('click', (e) => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    level = btn.dataset.level;
+    [...e.currentTarget.children].forEach(b => b.classList.toggle('active', b===btn));
+    start();
+  });
+  document.addEventListener('keydown', (e) => {
+    const map = { ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right', w:'up', s:'down', a:'left', d:'right' };
+    const name = map[e.key]; if (!name) return; e.preventDefault(); setDir(name);
+  });
+  document.querySelectorAll('.pad button').forEach(b => b.onclick = () => setDir(b.dataset.dir));
+  document.getElementById('play').onclick = start;
+</script>
+</body>
+</html>

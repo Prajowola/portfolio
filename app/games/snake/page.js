@@ -112,6 +112,7 @@ export default function SnakePage() {
       title="Snake"
       tagline="Eat the pink food to grow. Don't hit the walls or yourself."
       instructions="Use the arrow keys (or WASD) on desktop, or the on-screen pad on mobile."
+      sourceSlug="snake"
     >
       <p className="mb-4 text-lg font-semibold text-plum dark:text-lavender">Score: {score}</p>
 
