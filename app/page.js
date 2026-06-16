@@ -38,7 +38,7 @@ export default function HomePage() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <h1 className="text-4xl font-semibold leading-tight text-plum dark:text-white md:text-6xl">
-            Prajawola Adhikari
+            Prajowola Adhikari
             <span className="mt-3 block text-xl font-medium text-plum/80 dark:text-white/70 md:text-2xl">
               Aspiring Digital Marketer
             </span>
@@ -98,7 +98,7 @@ export default function HomePage() {
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
               src="/profile.jpg"
-              alt="Prajawola Adhikari"
+              alt="Prajowola Adhikari"
               className="mx-auto h-80 w-full max-w-xs rounded-3xl object-cover shadow-glow"
             />
           </div>

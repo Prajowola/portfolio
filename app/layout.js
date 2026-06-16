@@ -5,7 +5,7 @@ import Providers from '@/components/Providers';
 import ScrollProgress from '@/components/ScrollProgress';
 
 export const metadata = {
-  title: 'Prajawola Adhikari | Digital Marketing Portfolio',
+  title: 'Prajowola Adhikari | Digital Marketing Portfolio',
   description: 'Premium personal brand portfolio for digital marketing roles.'
 };
 
