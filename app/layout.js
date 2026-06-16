@@ -1,6 +1,8 @@
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import Providers from '@/components/Providers';
+import ScrollProgress from '@/components/ScrollProgress';
 
 export const metadata = {
   title: 'Prajawola Adhikari | Digital Marketing Portfolio',
@@ -9,11 +11,14 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <Navbar />
-        <main className="min-h-screen pt-28">{children}</main>
-        <Footer />
+        <Providers>
+          <ScrollProgress />
+          <Navbar />
+          <main className="min-h-screen pt-28">{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

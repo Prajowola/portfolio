@@ -20,8 +20,8 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/60 py-6">
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-plum/80 md:flex-row md:px-10">
+    <footer className="border-t border-white/60 py-6 dark:border-white/10">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-plum/80 dark:text-white/60 md:flex-row md:px-10">
         <p>© {new Date().getFullYear()} Prajawola Adhikari</p>
 
         <div className="flex items-center gap-3">
@@ -32,7 +32,7 @@ export default function Footer() {
               aria-label={label}
               target={href.startsWith('http') ? '_blank' : undefined}
               rel={href.startsWith('http') ? 'noreferrer' : undefined}
-              className="rounded-full border border-white/70 bg-white/70 p-2 transition hover:-translate-y-0.5 hover:text-plum"
+              className="rounded-full border border-white/70 bg-white/70 p-2 transition hover:-translate-y-0.5 hover:text-plum dark:border-white/10 dark:bg-midnightCard/70 dark:hover:text-lavender"
             >
               <Icon size={16} />
             </a>
