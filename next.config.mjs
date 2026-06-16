@@ -1,13 +1,11 @@
 /** @type {import('next').NextConfig} */
-const isProd = process.env.NODE_ENV === 'production';
-
+// Served from the root of the custom domain (prajowolaadhikari.com.np),
+// so no basePath/assetPrefix is needed.
 const nextConfig = {
   output: 'export',
   images: {
     unoptimized: true,
   },
-  basePath: isProd ? '/portfolio' : '',
-  assetPrefix: isProd ? '/portfolio/' : '',
   trailingSlash: true,
 };
 
