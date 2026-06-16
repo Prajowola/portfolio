@@ -5,6 +5,10 @@ import { motion } from 'framer-motion';
 import AmbientBlobs from '@/components/AmbientBlobs';
 import FadeIn from '@/components/FadeIn';
 
+// Raw <img>/<a> asset paths are not rewritten by Next's basePath, so prefix
+// them manually to match the basePath set in next.config.mjs.
+const assetPrefix = process.env.NODE_ENV === 'production' ? '/portfolio' : '';
+
 const previewCards = [
   {
     title: 'Audience-First Strategy',
@@ -97,7 +101,7 @@ export default function HomePage() {
             <motion.img
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-              src="/profile-placeholder.svg"
+              src={`${assetPrefix}/profile.jpg`}
               alt="Prajawola Adhikari"
               className="mx-auto h-80 w-full max-w-xs rounded-3xl object-cover shadow-glow"
             />
